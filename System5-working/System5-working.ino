@@ -36,7 +36,6 @@ ISR(TIMER0_COMPA_vect){  //This is the interrupt request
   }
   
   if(sys_active) {
-    timer++;
 
     if(timer%1000==0){
       box.clear();
@@ -46,14 +45,16 @@ ISR(TIMER0_COMPA_vect){  //This is the interrupt request
 
     }
 
-    if (timer%5000==0){
-      sys_stop();
-    }
-
     if(timer%300==0){
       static boolean output = HIGH;
       digitalWrite(relay1, output);
       output = !output;
+    }
+
+    timer++;
+
+    if (timer%5000==0){
+      sys_stop();
     }
   }
   
@@ -86,15 +87,12 @@ void setup() {
   dmd.selectFont(Arial_Black_16); // Font used
   dmd.begin();     // Start DMD 
   box.clear();
-//  box.print("24"); // Display TEXT SFE
-  
-//  matrix.begin();
-//  matrix.fillScreen(0);//clear the screen
+
 
 }
 
 void loop() {
-//  delay(5);  
+
 }
   
 void sys_start(){
