@@ -42,6 +42,8 @@ void setup(){
   TCCR1B = (1<<WGM12) | (1<<CS11);
   TCCR1B = (1<<CS10);
   TIMSK1 = (1<<OCIE1A);  
+  sei();
+  Serial.println("Timer1 Setup finished");
   
 //  TCCR1A = 0;
 //  TCCR1B=(1<<WGM12);    //Set the CTC mode   
@@ -49,8 +51,8 @@ void setup(){
 //  TIMSK1|=(1<<OCIE1A);   //Set the interrupt request
 //  TCCR1B|=();    //Set the prescale 1/64 clock
 //  TCCR1B|=(1<<CS10);
-  sei();
-  Serial.println("Timer1 Setup finished");
+  
+  
   
   tmrpcm.speakerPin = 9; 
   tmrpcm.quality(1);//define speaker pin. 

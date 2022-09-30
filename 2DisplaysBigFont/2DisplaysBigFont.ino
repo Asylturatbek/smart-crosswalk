@@ -38,7 +38,7 @@ ISR(TIMER0_COMPA_vect){
     
     timer++;
 
-    if (timer%5000==0){
+    if (timer%2000==0){
       sys_stop();
     }
   }

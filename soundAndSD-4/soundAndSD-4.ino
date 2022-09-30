@@ -32,7 +32,9 @@ void loop(){}
 void sys_start(){
   sys_active = true;
   digitalWrite(led, LOW);
-  tmrpcm.play("3.wav"); 
+  tmrpcm.play("3.wav");
+  delay(3000);
+  tmrpcm.stopPlayback();
 }
 
 void sys_stop(){
