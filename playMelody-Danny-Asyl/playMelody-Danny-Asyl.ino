@@ -1,38 +1,29 @@
 #include "pitches.h"
-
-#define OUTPUT_STATUS_PERIOD  2   // in sec
-
 int speaker = 9;
 int led = 7;
+
 int sys_active = 0;
-unsigned char timer=0;
-unsigned char BuzzerAlertCount = 0;
+unsigned long timer=0;
+unsigned long BuzzerIntervalCount = 0;
 static boolean output = HIGH;
-unsigned char ucOutputStatusCount = OUTPUT_STATUS_PERIOD;
-boolean b1HzEvent = false;
 
 ISR(TIMER1_COMPA_vect){  //This is the interrupt request
-  if ((timer & 0x07) == 0)
-  {
-    b1HzEvent = true;
-    if(sys_active)
-    {
+  if(sys_active){
+    if ((timer & 0x07) == 0) {
       tone(speaker, NOTE_C5, 200);
+    } else if ((timer & 0x07) == 2) {
+     tone(speaker, NOTE_FS4, 200);
+     BuzzerIntervalCount--;
+     if (BuzzerIntervalCount == 0)
+     {
+      sys_active = false;
+     }
     }
+    timer++;
+
   }
-  else if ((timer & 0x07) == 2)
-  {
-    if(sys_active)
-    {
-      tone(speaker, NOTE_FS4, 200);
-      BuzzerAlertCount--;
-      if (BuzzerAlertCount == 0)
-      {
-        sys_active = false;
-      }
-    }
-  }
-  timer++;
+  
+  
 }
 
 void setup() {
@@ -54,16 +45,14 @@ void setup() {
 }
 
 void loop() {
-  if (b1HzEvent)
-  { // 1Hz Handler
-    b1HzEvent = false;
-    
-  }
+//  if ((timer2 & 0x28) == 0) {
+//      sys_active = false;
+//  }
 }
 
 void sys_start(){
   if (sys_active == false)
-    BuzzerAlertCount = 6;
+    BuzzerIntervalCount = 5;
   sys_active = true;
 }
 
