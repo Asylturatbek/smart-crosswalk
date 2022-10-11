@@ -32,5 +32,3 @@ unsigned char Battery_GetPresentage(unsigned int uiVoltage)
   }
   return 255;
 }
-
-

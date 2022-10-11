@@ -8,8 +8,10 @@ unsigned long BuzzerIntervalCount = 0;
 static boolean output = HIGH;
 
 ISR(TIMER1_COMPA_vect){  //This is the interrupt request
+  
   if(sys_active){
     if ((timer & 0x07) == 0) {
+      Serial.println("oka");
       tone(speaker, NOTE_C5, 200);
     } else if ((timer & 0x07) == 2) {
      tone(speaker, NOTE_FS4, 200);

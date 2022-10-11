@@ -8,7 +8,7 @@
 #define SYS_INTERVAL              5   // in sec
 #define BUTTON_PRESS_GUARD_TIME   90  // in sec
 #define RED_COUNT_DOWN_INTERVAL   10  // in sec
-#define COUNT_DOWN_PULSE_INTERVAL 200 // in ms
+#define COUNT_DOWN_PULSE_INTERVAL 20 // in ms
 
 RF24 radio(PIN_RF_CE, PIN_RF_CSN); // CE, CSN
 const byte addresses[][6] = {"00001", "00002"};
@@ -23,6 +23,8 @@ boolean bSysButtonPressed = false;
 boolean bRFReceived = false;
 unsigned char ButtonPressGuardCountDown = 0;
 unsigned char RedCountDown = 0;
+boolean should_wait = false;
+int wait_countdown = 0;
 
 ISR(TIMER4_COMPA_vect){  //This is the interrupt request
   if(sys_active) {
@@ -120,7 +122,7 @@ void loop() {
     }
   }
 
-  if ((bSysButtonPressed) || (bRFReceived))
+  if ( ((bSysButtonPressed) || (bRFReceived)) && (!should_wait) )
   {
     bSysButtonPressed = false;
     
@@ -137,20 +139,6 @@ void loop() {
             radio.startListening();
           }
         }
-        if (ButtonPressGuardCountDown)
-        {
-          digitalWrite(PIN_COUNTDOWN_RED, HIGH);
-          delay(COUNT_DOWN_PULSE_INTERVAL);
-          digitalWrite(PIN_COUNTDOWN_RED, LOW);
-          RedCountDown = RED_COUNT_DOWN_INTERVAL;
-        }
-        else
-        {
-          digitalWrite(PIN_COUNTDOWN_GREEN, HIGH);
-          delay(COUNT_DOWN_PULSE_INTERVAL);
-          digitalWrite(PIN_COUNTDOWN_GREEN, LOW);
-        }        
-        ButtonPressGuardCountDown = BUTTON_PRESS_GUARD_TIME;
 
         sys_countdown = SYS_INTERVAL;
         Statistic_ButtonActivate();
@@ -163,27 +151,27 @@ void loop() {
     Serial.println("BUTTON");
   }
   
-  if (bEvent1Hz)
-  {
-    bEvent1Hz = false;
-    if (ButtonPressGuardCountDown)
-      ButtonPressGuardCountDown--;
-    if (RedCountDown)
-    {
-      RedCountDown--;
-      if (RedCountDown == 0)
-      {
-        digitalWrite(PIN_COUNTDOWN_GREEN, HIGH);
-        delay(COUNT_DOWN_PULSE_INTERVAL);
-        digitalWrite(PIN_COUNTDOWN_GREEN, LOW);
-      }
+  if (bEvent1Hz) {
+
+    if(should_wait){
+      wait_countdown--;
+      if(wait_countdown == 0)
+        should_wait = false;
+        digitalWrite(PIN_COUNTDOWN_RED, LOW);
     }
+    
+    Serial.println("okki");
+    bEvent1Hz = false;
     Statistic_1HzHook();
   }
 }
   
 void sys_start(){
   bSysButtonPressed = true;
+  if(should_wait) {
+    wait_countdown = 5;
+    digitalWrite(PIN_COUNTDOWN_RED, HIGH);
+  }
 }
 
 void sys_stop(){
@@ -191,7 +179,10 @@ void sys_stop(){
   TIMSK4 = 0;  
   
   sys_active = false;
+  should_wait = true;
+  wait_countdown = 5;
   signalState = 0;
+  
   digitalWrite(PIN_RELAY_BLINKING, LOW);
   digitalWrite(PIN_RELAY_PROJECTOR , LOW);
 }

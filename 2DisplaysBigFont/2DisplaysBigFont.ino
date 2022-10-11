@@ -20,6 +20,7 @@ ISR(TIMER0_COMPA_vect){
   if (sys_active) {
 
     if(timer%1000==0){
+      Serial.println("second");
       if (number<10) {
         dmd.clearScreen();
         dmd.drawString(7, 0, String(number));
@@ -38,7 +39,7 @@ ISR(TIMER0_COMPA_vect){
     
     timer++;
 
-    if (timer%2000==0){
+    if (timer%5000==0){
       sys_stop();
     }
   }
