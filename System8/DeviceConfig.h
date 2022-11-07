@@ -9,10 +9,10 @@
 #define PIN_RF_CE                   48
 #define PIN_RF_CSN                  49
 
-#define PIN_RELAY_PROJECTOR         5
-#define PIN_RELAY_BLINKING          4
-#define PIN_COUNTDOWN_RED           9
-#define PIN_COUNTDOWN_GREEN         10
+#define PIN_RELAY_BLINKING          5
+#define PIN_RELAY_PROJECTOR         4
+#define PIN_COUNTDOWN_RED           10
+#define PIN_COUNTDOWN_GREEN         11
 
 #define PIN_BATTERY_DETECT          A0
 

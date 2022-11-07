@@ -64,6 +64,8 @@ void setup() {
   pinMode(PIN_COUNTDOWN_RED, OUTPUT);
   pinMode(PIN_COUNTDOWN_GREEN, OUTPUT);
   pinMode(PIN_BUTTON_SYS, INPUT_PULLUP);
+  stop_wait();
+  stop_go();
 
 
   Serial.print("Radio: ");
@@ -142,10 +144,12 @@ void loop() {
         TCNT4=1950;//reset timer
         TCCR4B = (1<<WGM42) | (1<<CS40) | (1<<CS42); // Set the prescale 1/1024 clock
         TIMSK4 = (1<<OCIE4A);   
+        start_go();
+        digitalWrite(25, HIGH);
         sys_active = true;
+        
     }
     bRFReceived = false;
-    Serial.println("BUTTON");
   }
   
   if (bEvent1Hz) {
@@ -154,10 +158,10 @@ void loop() {
       wait_countdown--;
       if(wait_countdown == 0)
         should_wait = false;
-        digitalWrite(PIN_COUNTDOWN_RED, LOW);
+        stop_wait();
+        digitalWrite(24, LOW);
     }
     
-    Serial.println("okki");
     bEvent1Hz = false;
     Statistic_1HzHook();
   }
@@ -167,11 +171,14 @@ void sys_start(){
   bSysButtonPressed = true;
   if(should_wait) {
     wait_countdown = SYS_INTERVAL;
-    digitalWrite(PIN_COUNTDOWN_RED, HIGH);
+    start_wait();
+    digitalWrite(24, HIGH);
   }
 }
 
 void sys_stop(){
+  stop_go();
+  digitalWrite(25, LOW);
   TCCR4B = 0;
   TIMSK4 = 0;  
   
@@ -179,7 +186,24 @@ void sys_stop(){
   should_wait = true;
   wait_countdown = SYS_INTERVAL;
   signalState = 0;
+
   
   digitalWrite(PIN_RELAY_BLINKING, LOW);
   digitalWrite(PIN_RELAY_PROJECTOR , LOW);
+}
+
+void start_wait() {
+  digitalWrite(PIN_COUNTDOWN_RED, LOW);
+}
+
+void stop_wait() {
+  digitalWrite(PIN_COUNTDOWN_RED, HIGH);
+}
+
+void start_go() {
+  digitalWrite(PIN_COUNTDOWN_GREEN, LOW);
+}
+
+void stop_go() {
+  digitalWrite(PIN_COUNTDOWN_GREEN, HIGH);
 }

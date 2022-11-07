@@ -11,8 +11,8 @@
 
 #define PIN_RELAY_PROJECTOR         5
 #define PIN_RELAY_BLINKING          4
-#define PIN_COUNTDOWN_RED           9
-#define PIN_COUNTDOWN_GREEN         10
+#define PIN_COUNTDOWN_RED           10
+#define PIN_COUNTDOWN_GREEN         11
 
 #define PIN_BATTERY_DETECT          A0
 
