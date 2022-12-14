@@ -6,59 +6,58 @@
 #include "pitches.h"
 
 // times in seconds
-#define SYS_INTERVAL               5     // crossing time for pedestrians
-#define WAIT_INTERVAL              5     // 
-#define STAND_STILL_INTERVAL       5      // 
+#define SYS_INTERVAL               15     // crossing time for pedestrians
+#define WAIT_INTERVAL              15     // for cooldown
+#define STAND_STILL_INTERVAL       5     // waiting cars to stop
 
 RF24 radio(PIN_RF_CE, PIN_RF_CSN); // CE, CSN
-const byte addresses[][6] = {"00001", "00002"};
+const byte addresses[][6] = { "node1", "node2" };
+
 const unsigned char* address1= addresses[0];; // change from adress2 to 1 when other box
-const unsigned char* address2= addresses[1];; // change """""
-boolean signalState = 0;
-int sys_active = 0;
+const unsigned char* address2 = addresses[1];; // change """""
+bool sys_active  = false;
+bool report      = false;
+
+int n_of_tx_tries           = 0;
+int sys_countdown           = 0;
+int wait_countdown          = 0;
+int stand_still_countdown   = 0;
+
+bool bEvent1Hz         = false;
+bool bSysButtonPressed = false;
+bool bRFReceived       = false;
+bool wait_started      = false;
+
 unsigned long timer=0;
-unsigned long sys_countdown;
-int wait_countdown = 0;
-int stand_still_countdown = 0;
-boolean bEvent1Hz = false;
-boolean bSysButtonPressed = false;
-boolean bRFReceived = false;
 unsigned char ButtonPressGuardCountDown = 0;
-boolean should_wait = false;
-boolean wait_started = false;
+int data_rx_tx[2] = {0, 0};   // (startbool, waitseconds)
 
 
 ISR(TIMER4_COMPA_vect){  //This is the interrupt request
+  
   if(sys_active) {
     if(timer == 0 && stand_still_countdown == 0){
       digitalWrite(PIN_RELAY_PROJECTOR, HIGH);
       if (sys_countdown == 0) {
-        sys_stop();
-        return;
-      } else {
-        tone(PIN_SPEAKER, NOTE_C5, 200);
-        sys_countdown--; 
+        sys_stop(); return;
       }
+      sys_countdown--; 
     }
-    
-    if (timer == 2 && stand_still_countdown == 0)
-      tone(PIN_SPEAKER, NOTE_FS4, 200);
 
-    if ((timer & 0x01) == 0){
+    if ((timer & 0x01) == 0){                                      //This timer is 
       static boolean output = HIGH;
-      static boolean output2 = LOW;
+      static boolean output2 = HIGH;
       digitalWrite(PIN_RELAY_BLINKING, output);
       digitalWrite(PIN_RELAY_BLINKING2, output2);
       output = !output;
-      output2 = !output2;
+      //output2 = !output2;
     }
     
     timer++;
     if (timer == 8) {
       timer = 0;
-      if (stand_still_countdown) {
+      if (stand_still_countdown)
         stand_still_countdown--;
-      }
     }
       
   }
@@ -72,12 +71,21 @@ void setup() {
   Serial.begin(9600);
   Serial.println("\r\nInitialization...");
 
+//  int some1 = 0;
+//  int some2 = 14;
+//  int some3 = 19;
+//  int some4 = 25;
+//  Serial.println(sizeof(some1));
+//  Serial.println(sizeof(some2));
+//  Serial.println(sizeof(some3));
+//  Serial.println(sizeof(some4));
+
   pinMode(PIN_RELAY_PROJECTOR, OUTPUT);
-  pinMode(PIN_RELAY_BLINKING, OUTPUT);
+  pinMode(PIN_RELAY_BLINKING,  OUTPUT);
   pinMode(PIN_RELAY_BLINKING2, OUTPUT);
-  pinMode(PIN_COUNTDOWN_RED, OUTPUT);
+  pinMode(PIN_COUNTDOWN_RED,   OUTPUT);
   pinMode(PIN_COUNTDOWN_GREEN, OUTPUT);
-  pinMode(PIN_BUTTON_SYS, INPUT_PULLUP);
+  pinMode(PIN_BUTTON_SYS,      INPUT_PULLUP);
   stop_wait();
   stop_go();
 
@@ -85,17 +93,15 @@ void setup() {
   Serial.print("Radio: ");
   radio.begin();
   radio.setDataRate(RF24_2MBPS);
-  if (radio.getDataRate() == RF24_2MBPS)
-  {
+  if (radio.getDataRate() == RF24_2MBPS) {
     radio.setDataRate(RF24_1MBPS);
+    radio.setChannel(0x6f);
     radio.openWritingPipe(address1); // 00002
     radio.openReadingPipe(1, address2); // 00001
-    radio.setPALevel(RF24_PA_MIN);
+    radio.setPALevel(RF24_PA_HIGH);
     radio.startListening();
     Serial.println("OK");
-  }
-  else
-  {
+  } else {
     ucBootResultFlags |= BOOT_RESULT_FLAG_RF_ERROR;
     Serial.println("Fail");
   }
@@ -127,23 +133,48 @@ void setup() {
 void loop() {
   if ((ucBootResultFlags & BOOT_RESULT_FLAG_RF_ERROR) == 0) {
     while (radio.available()){
-      radio.read(&signalState, sizeof(signalState));
-      if (signalState == HIGH && sys_active==false) { 
+      radio.read(&data_rx_tx, sizeof(data_rx_tx));
+      Serial.print("data_rx_tx:");
+      Serial.println(data_rx_tx[0]);
+      if (data_rx_tx[0] == HIGH && sys_active==false) { 
         bRFReceived = true;
+        report = true;
+        wait_countdown = data_rx_tx[1];
       }
     }
   }
 
-  if ( (bSysButtonPressed) && (!bRFReceived) ) {
+  if ( (bSysButtonPressed) && (!bRFReceived) && (!report) ) {
       if ((ucBootResultFlags & BOOT_RESULT_FLAG_RF_ERROR) == 0) {
           radio.stopListening();
-          signalState = 1;
-          radio.write(&signalState, sizeof(signalState));
+          TCNT3 = 0;  // stop the timer to get values
+          data_rx_tx[0] = 1;
+          data_rx_tx[1] = wait_countdown;
+          while( (!report) && (n_of_tx_tries<500) ) {
+            report = radio.write(&data_rx_tx, sizeof(data_rx_tx));
+            n_of_tx_tries++;
+          }
+            
           radio.startListening();
+          
+          if (report) {
+            Serial.print("Reached, N 0f tries: ");
+            Serial.println(n_of_tx_tries);
+          } else {
+            Serial.println("Couldn't reach the receiver!");
+            n_of_tx_tries = 0;
+            bSysButtonPressed = false;
+          }
       }
   }
 
-  if ( ((bSysButtonPressed) || (bRFReceived)) && (!should_wait) ) {
+  //bool signal_report = ( (bSysButtonPressed) || (bRFReceived) && (report) );
+
+  if ( ((bSysButtonPressed) || (bRFReceived)) && (!wait_countdown) && (report) ) {
+    Serial.println("Started the normal work!;");
+    n_of_tx_tries = 0;
+    report = false;
+    
     bSysButtonPressed = false;
     
     if(sys_active==false) {
@@ -159,20 +190,19 @@ void loop() {
         
     }
     bRFReceived = false;
-  } else if (((bSysButtonPressed) || (bRFReceived)) && ( (should_wait) && (!wait_started) )) {
-    TCNT3=15623;//reset timer
-    start_wait();
+  } else if (((bSysButtonPressed) || (bRFReceived)) && ( (wait_countdown) && (!wait_started) && (report) )) {
+    wait_countdown = data_rx_tx[1];
     wait_started = true;
+    TCNT3=0;               //reset timer
+    start_wait();
+    Serial.println("Waiting started!");
   }
   
   if (bEvent1Hz) {
-
-    if(should_wait) {
+    if(wait_countdown)
       wait_countdown--;
-      if(wait_countdown == 0)
-        should_wait = false;
-        stop_wait();
-    }
+    else if (wait_countdown == 0)
+      stop_wait();
     
     bEvent1Hz = false;
     Statistic_1HzHook();
@@ -181,9 +211,6 @@ void loop() {
   
 void sys_start(){
   bSysButtonPressed = true;
-  if(should_wait) {
-    start_wait();
-  }
 }
 
 void sys_stop() {
@@ -192,11 +219,8 @@ void sys_stop() {
   TIMSK4 = 0;  
   
   sys_active = false;
-  should_wait = true;
   wait_started = false;
   wait_countdown = WAIT_INTERVAL;
-  signalState = 0;
-
   
   digitalWrite(PIN_RELAY_BLINKING, LOW);
   digitalWrite(PIN_RELAY_BLINKING2, LOW);

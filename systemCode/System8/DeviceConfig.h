@@ -2,9 +2,9 @@
 #define _DEVICE_CONFIG_H_
 
 #define PIN_BUTTON_SYS              2
-#define PIN_BUTTON_STATUS           23
+#define PIN_BUTTON_STATUS           18
 
-#define PIN_SPEAKER                 11
+#define PIN_SPEAKER                 8
 
 #define PIN_RF_CE                   48
 #define PIN_RF_CSN                  49

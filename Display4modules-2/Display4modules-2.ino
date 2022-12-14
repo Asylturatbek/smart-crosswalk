@@ -1,14 +1,19 @@
 #include <SPI.h>
-#include <DMD2.h>
-#include <fonts/SystemFont5x7.h>
-#include <fonts/SystemFontRus5x7_test.h>
-#include <fonts/Asyl32x16Font.h>
+#include <DMD.h>
+//#include <fonts/SystemFont5x7.h>
+#include "SystemFontRus5x7.h"
+#include "Asyl32x16Font.h"
 
 #define GO_COUNTDOWN              5  // in sec
 #define WAIT_COUNTDOWN              5  // in sec
 
-SoftDMD dmd(1,4);  // DMD controls the entire display
-DMD_TextBox box(dmd, 0, 0, 32, 16);  
+#define DISPLAYS_ACROSS 1
+#define DISPLAYS_DOWN 4
+DMD dmd(DISPLAYS_ACROSS, DISPLAYS_DOWN);
+
+void ScanDMD() { 
+  dmd.scanDisplayBySPI();
+}
 
 unsigned long timer=0;
 int sys_active = 0;
@@ -59,17 +64,10 @@ void setup() {
 //  TCCR4B = (1<<WGM42) | (1<<CS40) | (1<<CS42); // Set the prescale 1/1024 clock
    
   
-  dmd.setBrightness(100);
-  dmd.selectFont(SystemFontRus5x7_test);
+//  dmd.setBrightness(100);
+  dmd.selectFont(SystemFontRus5x7);
   dmd.begin();
   dmd.clearScreen();
-
-  dmd.drawString(4, 0, String("пврв"));
-  dmd.drawString(4, 15, String("kalya"));
-//  dmd.drawString(4, 0, 97);
-//  box.print(97);
-//  dmd.drawFilledBox(8,12,17,17);
-//  dmd.drawBox(0,0,31,63);
 
 }
 
@@ -83,10 +81,10 @@ void sys_start_wait(){
   if (!sys_active){
     dmd.clearScreen();
     dmd.selectFont(SystemFont5x7);
-    dmd.drawString(4, 5, String("Wait"));
-    dmd.drawString(4, 15, String("Please"));
-    dmd.drawString(4, 37, String("Until it"));
-    dmd.drawString(4, 47, String("starts!"));
+    dmd.drawString(4, 5,  "wait", strlen("wait"), GRAPHICS_NORMAL );
+    dmd.drawString(4, 15, "Please", strlen("Please"), GRAPHICS_NORMAL );
+    dmd.drawString(4, 37, "Until it", strlen("Until it"), GRAPHICS_NORMAL );
+    dmd.drawString(4, 47, "starts!", strlen("starts!",), GRAPHICS_NORMAL ;
   }
 
   
