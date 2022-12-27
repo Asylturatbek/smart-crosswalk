@@ -1,7 +1,7 @@
 #include <SPI.h>
 #include <DMD2.h>
 #include "ChangedRus5x7.h"
-#include <fonts/Asyl32x16Font.h>  
+#include "Asyl32x16Font.h"  
 
 SoftDMD dmd(1,4);  // DMD controls the entire display
 DMD_TextBox box1(dmd, 0, 0, 32, 16);  
