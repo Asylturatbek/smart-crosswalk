@@ -14,8 +14,8 @@ const byte addresses[][6] = { "node1", "node2" };
 
 const unsigned char* address1 = addresses[0];; // change from adress2 to 1 when other box
 const unsigned char* address2 = addresses[1];; // change """""
-char go_message[5]   = "10315";
-char wait_message[5] = "00000";
+char go_message[6]   = "10315";
+char wait_message[6] = "00000";
 bool sys_active  = false;
 bool report      = false;
 
@@ -176,18 +176,17 @@ void loop() {
       Serial.println("Started the normal work!;");
       n_of_tx_tries = 0;
       report = false;
-      
-      bSysButtonPressed = false;
   
       sys_countdown = SYS_INTERVAL;
       stand_still_countdown = STAND_STILL_INTERVAL;
       Statistic_ButtonActivate();
-      TCNT4=1950;//reset timer
+      TCNT4  = 1950;//reset timer
       TCCR4B = (1<<WGM42) | (1<<CS40) | (1<<CS42); // Set the prescale 1/1024 clock
       TIMSK4 = (1<<OCIE4A); 
           
       Serial1.print(go_message);                 //  x xx xx format         X          XX             XX       FORMAT
-      sys_active = true;                          //wait or go   stand_inter    go_interval
+      sys_active = true;                         //wait or go   stand_inter    go_interval
+      bSysButtonPressed = false;                        
       Serial.println("Here in go!");
 
       bRFReceived = false;
@@ -213,7 +212,6 @@ void loop() {
   
 void sys_start(){
   if(!sys_active) {
-    Serial.print("pressed");
     bSysButtonPressed = true;
   }
   
