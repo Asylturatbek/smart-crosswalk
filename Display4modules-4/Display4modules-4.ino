@@ -87,8 +87,9 @@ void loop() {
     }
     text[chPos] = 0; //terminate cString
 
+    Serial.println(text);
     if (chPos == 5) {
-      Serial.println(text);
+      //Serial.println(text);
       int x = text[0] - '0';
       if (x == 0) {
         sys_stand_still();

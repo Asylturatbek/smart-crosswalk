@@ -12,8 +12,8 @@
 RF24 radio(PIN_RF_CE, PIN_RF_CSN); // CE, CSN
 const byte addresses[][6] = { "node1", "node2" };
 
-const unsigned char* address2 = addresses[0];; // change from adress2 to 1 when other box
-const unsigned char* address1 = addresses[1];; // change """""
+const unsigned char* address1 = addresses[0]; // change from adress2 to 1 when other box
+const unsigned char* address2 = addresses[1]; // change """""
 char go_message[6]   = "10315";
 char wait_message[6] = "00000";
 bool sys_active  = false;
@@ -46,11 +46,10 @@ ISR(TIMER4_COMPA_vect){  //This is the interrupt request
 
     if ((timer & 0x01) == 0){                                      //This timer is 
       static boolean output = HIGH;
-      static boolean output2 = LOW;
+      static boolean output2 = HIGH;
       digitalWrite(PIN_RELAY_BLINKING, output);
       digitalWrite(PIN_RELAY_BLINKING2, output2);
       output = !output;
-      output2 = !output2;
     }
     
     timer++;
@@ -85,7 +84,7 @@ void setup() {
   pinMode(PIN_RELAY_BLINKING,  OUTPUT);
   pinMode(PIN_RELAY_BLINKING2, OUTPUT);
   pinMode(PIN_RADIO_STATUS,    OUTPUT);
-  pinMode(PIN_BUTTON_SYS,      INPUT);
+  pinMode(PIN_BUTTON_SYS,      INPUT_PULLUP);
 
   Serial.print("Radio: ");
   radio.begin();
